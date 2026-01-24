@@ -7,7 +7,7 @@
  * - Production: ironforged.gg
  * - Staging: ironforged.staging.emuy.gg
  * 
- * @author Yume Tools Team
+ * @author yume
  */
 
 import './index.css'
@@ -44,7 +44,7 @@ function App() {
         
         {/* Subtitle */}
         <p className="text-xl text-amber-400 font-medium mb-6">
-          Tile Events Tracker
+          Ironforged OSRS Clan
         </p>
 
         {/* Under Development Badge */}
@@ -58,10 +58,10 @@ function App() {
 
         {/* Description */}
         <p className="text-gray-300 text-lg leading-relaxed mb-8">
-          We're working hard to bring you an amazing tile events tracking experience. 
-          Track progress, compete with clanmates, and conquer the board!
+          We're working hard to bring you an amazing website experience. 
+          Please check back soon!
         </p>
-        
+
         {/* Back to main site */}
         <a 
           href="https://emuy.gg"
