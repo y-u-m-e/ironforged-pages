@@ -24,9 +24,25 @@ function isStaging(): boolean {
   );
 }
 
-// Check for auth cookie
-function hasAuthCookie(): boolean {
-  return document.cookie.includes('auth_token=');
+// Get auth token from URL, localStorage, or cookie
+function getAuthToken(): string | null {
+  // Check URL parameter first (from OAuth callback)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('auth_token');
+  if (urlToken) {
+    // Store in localStorage and clean URL
+    localStorage.setItem('staging_auth_token', urlToken);
+    window.history.replaceState({}, '', window.location.pathname);
+    return urlToken;
+  }
+  
+  // Check localStorage
+  const storedToken = localStorage.getItem('staging_auth_token');
+  if (storedToken) return storedToken;
+  
+  // Check cookie (for emuy.gg domains)
+  const match = document.cookie.match(/auth_token=([^;]+)/);
+  return match ? match[1] : null;
 }
 
 function StagingGate({ children }: { children: React.ReactNode }) {
@@ -41,10 +57,16 @@ function StagingGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Check for auth cookie
-    if (hasAuthCookie()) {
-      // Verify with auth API
-      fetch('https://auth.api.emuy.gg/auth/me', { credentials: 'include' })
+    const token = getAuthToken();
+    
+    if (token) {
+      // Verify token with auth API
+      fetch('https://auth.api.emuy.gg/auth/me', { 
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
           // Check if admin or has view_devops permission
@@ -52,9 +74,15 @@ function StagingGate({ children }: { children: React.ReactNode }) {
             data.is_super_admin || 
             data.permissions?.includes('view_devops')
           );
+          if (!hasAccess) {
+            localStorage.removeItem('staging_auth_token');
+          }
           setAuthorized(hasAccess);
         })
-        .catch(() => setAuthorized(false))
+        .catch(() => {
+          localStorage.removeItem('staging_auth_token');
+          setAuthorized(false);
+        })
         .finally(() => setChecking(false));
     } else {
       setChecking(false);
