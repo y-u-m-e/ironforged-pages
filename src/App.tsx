@@ -61,23 +61,7 @@ function App() {
           We're working hard to bring you an amazing tile events tracking experience. 
           Track progress, compete with clanmates, and conquer the board!
         </p>
-
-        {/* Features Coming */}
-        <div className="grid grid-cols-3 gap-4 text-sm text-gray-400 mb-10">
-          <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white/5">
-            <span className="text-2xl">🎯</span>
-            <span>Tile Tracking</span>
-          </div>
-          <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white/5">
-            <span className="text-2xl">📊</span>
-            <span>Leaderboards</span>
-          </div>
-          <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white/5">
-            <span className="text-2xl">🏆</span>
-            <span>Competitions</span>
-          </div>
-        </div>
-
+        
         {/* Back to main site */}
         <a 
           href="https://emuy.gg"
