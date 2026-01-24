@@ -18,8 +18,8 @@ function App() {
       className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
       style={{
         backgroundImage: 'url(/Background.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundSize: '120%',
+        backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',
       }}
     >
