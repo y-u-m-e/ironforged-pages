@@ -17,6 +17,11 @@ import Layout from '@/components/Layout'
 // Pages
 import EventsHome from '@/pages/EventsHome'
 import EventsList from '@/pages/EventsList'
+import TileEvent from '@/pages/TileEvent'
+import TileEvents from '@/pages/TileEvents'
+import TileEventAdmin from '@/pages/TileEventAdmin'
+import TileEventsGuide from '@/pages/TileEventsGuide'
+import TileEventsAdminGuide from '@/pages/TileEventsAdminGuide'
 
 function App() {
   return (
@@ -25,11 +30,11 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<EventsHome />} />
           <Route path="events" element={<EventsList />} />
-          {/* Add more routes:
-          <Route path="events/:eventId" element={<TileEvent />} />
+          <Route path="tile-events" element={<TileEvents />} />
+          <Route path="tile-events/:eventId" element={<TileEvent />} />
+          <Route path="tile-events/:eventId/admin" element={<TileEventAdmin />} />
           <Route path="guide" element={<TileEventsGuide />} />
-          <Route path="admin" element={<TileEventAdmin />} />
-          */}
+          <Route path="admin-guide" element={<TileEventsAdminGuide />} />
         </Route>
       </Routes>
     </AuthProvider>
@@ -37,4 +42,3 @@ function App() {
 }
 
 export default App
-
