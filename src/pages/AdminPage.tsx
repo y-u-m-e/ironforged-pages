@@ -265,17 +265,22 @@ export function AdminPage() {
       
       // Send bulk update to API
       const headers = getAuthHeaders();
+      console.log('Import - Full user object:', user);
       console.log('Import - User ID:', user?.id);
+      console.log('Import - Expected admin ID: 166201366228762624');
       console.log('Import - Token:', localStorage.getItem('staging_auth_token') ? 'present' : 'missing');
+      
+      const requestBody = { 
+        configs: updates,
+        admin_user_id: user?.id
+      };
+      console.log('Import - Request body admin_user_id:', requestBody.admin_user_id);
       
       const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
         method: 'PUT',
         credentials: 'include',
         headers,
-        body: JSON.stringify({ 
-          configs: updates,
-          admin_user_id: user?.id // Fallback auth for cross-service
-        })
+        body: JSON.stringify(requestBody)
       });
       
       const data = await res.json();
