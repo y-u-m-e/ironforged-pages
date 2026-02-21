@@ -429,7 +429,10 @@ export function ProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-amber-400 text-sm font-medium mb-1">Total Clan Points</div>
-                <div className="text-4xl font-bold text-white">{formatNumber(profile.points.total)}</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{Math.round(profile.points.total).toLocaleString()}</span>
+                  <span className="text-lg text-gray-400">({profile.points.total.toFixed(2)})</span>
+                </div>
               </div>
               <Trophy className="w-16 h-16 text-amber-400/30" />
             </div>
