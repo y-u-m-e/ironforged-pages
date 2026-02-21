@@ -430,7 +430,7 @@ export function AdminPage() {
             <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 text-sm text-gray-400">
               <strong className="text-gray-300">CSV Format:</strong> config_key, category, name, points_per_unit, post_99_points, multiplier, unit_type
               <br />
-              <span className="text-xs">Only config_key and points_per_unit are required for import. post_99_points is for skills only (XP after level 99). Export first to see all current values.</span>
+              <span className="text-xs">For skills: points_per_unit = XP per point (e.g., 30000 = 30k XP gives 1 point). post_99_points = XP per point after level 99.</span>
             </div>
 
             {/* Skills */}
@@ -450,8 +450,9 @@ export function AdminPage() {
               {expandedCategories.skill && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    <p>Pre-99 (≤13,034,431 XP): (XP / 100,000) × points_per_unit × multiplier</p>
-                    <p>Post-99 (&gt;13,034,431 XP): Pre-99 points + ((XP - 13,034,431) / 100,000) × post_99_points × multiplier</p>
+                    <p>Pre-99 (≤13,034,431 XP): XP ÷ xp_per_point × multiplier</p>
+                    <p>Post-99 (&gt;13,034,431 XP): Pre-99 points + (post-99 XP ÷ post_99_xp_per_point × multiplier)</p>
+                    <p className="text-gray-400 mt-1">Example: 100000 means 100k XP = 1 point</p>
                   </div>
                   {groupedConfigs.skill.map(config => (
                     <ConfigRow 
@@ -679,26 +680,26 @@ function ConfigRow({
       
       <div className="flex items-center gap-3">
         <div>
-          <label className="text-xs text-gray-500 block">{showPost99 ? 'Pre-99 Pts' : 'Points/Unit'}</label>
+          <label className="text-xs text-gray-500 block">{showPost99 ? 'XP/Point' : 'Points/Unit'}</label>
           <input
             type="number"
-            step="0.1"
+            step="1"
             value={localConfig.points_per_unit}
             onChange={e => {
               const val = parseFloat(e.target.value) || 0;
               setLocalConfig(prev => ({ ...prev, points_per_unit: val }));
               onChange(config.id, 'points_per_unit', val);
             }}
-            className="w-20 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
+            className={`${showPost99 ? 'w-24' : 'w-20'} px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none`}
           />
         </div>
         
         {showPost99 && (
           <div>
-            <label className="text-xs text-gray-500 block">Post-99 Pts</label>
+            <label className="text-xs text-gray-500 block">Post-99 XP/Pt</label>
             <input
               type="number"
-              step="0.1"
+              step="1"
               value={localConfig.post_99_points ?? ''}
               onChange={e => {
                 const val = e.target.value === '' ? null : parseFloat(e.target.value);
@@ -706,7 +707,7 @@ function ConfigRow({
                 onChange(config.id, 'post_99_points', val ?? 0);
               }}
               placeholder="Same"
-              className="w-20 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
+              className="w-24 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
             />
           </div>
         )}
