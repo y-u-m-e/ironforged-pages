@@ -451,7 +451,7 @@ export function AdminPage() {
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
                     <p>Pre-99 (≤13,034,431 XP): (XP / 100,000) × points_per_unit × multiplier</p>
-                    <p>Post-99 (>13,034,431 XP): Pre-99 points + ((XP - 13,034,431) / 100,000) × post_99_points × multiplier</p>
+                    <p>Post-99 (&gt;13,034,431 XP): Pre-99 points + ((XP - 13,034,431) / 100,000) × post_99_points × multiplier</p>
                   </div>
                   {groupedConfigs.skill.map(config => (
                     <ConfigRow 
