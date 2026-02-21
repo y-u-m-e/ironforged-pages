@@ -748,7 +748,8 @@ function ConfigRow({
   onChange, 
   onSave,
   saving,
-  showPost99 = false
+  showPost99 = false,
+  labelOverride
 }: { 
   config: PointConfig; 
   onChange: (id: string, field: string, value: number) => void;
