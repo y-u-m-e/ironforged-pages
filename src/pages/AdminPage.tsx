@@ -17,6 +17,7 @@ interface PointConfig {
   name: string;
   description?: string;
   points_per_unit: number;
+  post_99_points?: number | null;
   unit_type: string;
   multiplier: number;
   enabled: number;
@@ -116,6 +117,7 @@ export function AdminPage() {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           points_per_unit: config.points_per_unit,
+          post_99_points: config.post_99_points,
           multiplier: config.multiplier,
           enabled: config.enabled
         })
@@ -193,12 +195,13 @@ export function AdminPage() {
 
   // Export configs to CSV
   const exportToCsv = () => {
-    const headers = ['config_key', 'category', 'name', 'points_per_unit', 'multiplier', 'unit_type'];
+    const headers = ['config_key', 'category', 'name', 'points_per_unit', 'post_99_points', 'multiplier', 'unit_type'];
     const rows = configs.map(c => [
       c.id,
       c.category,
       c.name,
       c.points_per_unit,
+      c.post_99_points ?? '',
       c.multiplier,
       c.unit_type
     ]);
@@ -237,6 +240,7 @@ export function AdminPage() {
       const header = lines[0].split(',').map(h => h.trim().toLowerCase());
       const keyIndex = header.indexOf('config_key');
       const ptsIndex = header.indexOf('points_per_unit');
+      const post99Index = header.indexOf('post_99_points');
       const multIndex = header.indexOf('multiplier');
       
       if (keyIndex === -1 || ptsIndex === -1) {
@@ -244,7 +248,7 @@ export function AdminPage() {
       }
       
       // Parse data rows
-      const updates: { config_key: string; points_per_unit: number; multiplier: number }[] = [];
+      const updates: { config_key: string; points_per_unit: number; post_99_points?: number; multiplier: number }[] = [];
       
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
@@ -252,10 +256,19 @@ export function AdminPage() {
         
         const config_key = values[keyIndex];
         const points_per_unit = parseFloat(values[ptsIndex]);
+        const post_99_points = post99Index !== -1 && values[post99Index] ? parseFloat(values[post99Index]) : undefined;
         const multiplier = multIndex !== -1 ? parseFloat(values[multIndex]) : 1;
         
         if (config_key && !isNaN(points_per_unit)) {
-          updates.push({ config_key, points_per_unit, multiplier: isNaN(multiplier) ? 1 : multiplier });
+          const update: { config_key: string; points_per_unit: number; post_99_points?: number; multiplier: number } = { 
+            config_key, 
+            points_per_unit, 
+            multiplier: isNaN(multiplier) ? 1 : multiplier 
+          };
+          if (post_99_points !== undefined && !isNaN(post_99_points)) {
+            update.post_99_points = post_99_points;
+          }
+          updates.push(update);
         }
       }
       
@@ -415,9 +428,9 @@ export function AdminPage() {
 
             {/* CSV Format Help */}
             <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 text-sm text-gray-400">
-              <strong className="text-gray-300">CSV Format:</strong> config_key, category, name, points_per_unit, multiplier, unit_type
+              <strong className="text-gray-300">CSV Format:</strong> config_key, category, name, points_per_unit, post_99_points, multiplier, unit_type
               <br />
-              <span className="text-xs">Only config_key and points_per_unit are required for import. Export first to see all current values.</span>
+              <span className="text-xs">Only config_key and points_per_unit are required for import. post_99_points is for skills only (XP after level 99). Export first to see all current values.</span>
             </div>
 
             {/* Skills */}
@@ -437,7 +450,8 @@ export function AdminPage() {
               {expandedCategories.skill && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    Points are calculated as: (XP / 100,000) × points_per_unit × multiplier
+                    <p>Pre-99 (≤13,034,431 XP): (XP / 100,000) × points_per_unit × multiplier</p>
+                    <p>Post-99 (>13,034,431 XP): Pre-99 points + ((XP - 13,034,431) / 100,000) × post_99_points × multiplier</p>
                   </div>
                   {groupedConfigs.skill.map(config => (
                     <ConfigRow 
@@ -446,6 +460,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
+                      showPost99={true}
                     />
                   ))}
                 </div>
@@ -639,16 +654,19 @@ function ConfigRow({
   config, 
   onChange, 
   onSave,
-  saving 
+  saving,
+  showPost99 = false
 }: { 
   config: PointConfig; 
   onChange: (id: string, field: string, value: number) => void;
   onSave: (config: PointConfig) => void;
   saving: boolean;
+  showPost99?: boolean;
 }) {
   const [localConfig, setLocalConfig] = useState(config);
   const hasChanges = localConfig.points_per_unit !== config.points_per_unit || 
-                     localConfig.multiplier !== config.multiplier;
+                     localConfig.multiplier !== config.multiplier ||
+                     localConfig.post_99_points !== config.post_99_points;
 
   return (
     <div className="flex items-center gap-4 p-3 rounded-lg bg-gray-800/50">
@@ -661,7 +679,7 @@ function ConfigRow({
       
       <div className="flex items-center gap-3">
         <div>
-          <label className="text-xs text-gray-500 block">Points/Unit</label>
+          <label className="text-xs text-gray-500 block">{showPost99 ? 'Pre-99 Pts' : 'Points/Unit'}</label>
           <input
             type="number"
             step="0.1"
@@ -674,6 +692,24 @@ function ConfigRow({
             className="w-20 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
           />
         </div>
+        
+        {showPost99 && (
+          <div>
+            <label className="text-xs text-gray-500 block">Post-99 Pts</label>
+            <input
+              type="number"
+              step="0.1"
+              value={localConfig.post_99_points ?? ''}
+              onChange={e => {
+                const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                setLocalConfig(prev => ({ ...prev, post_99_points: val }));
+                onChange(config.id, 'post_99_points', val ?? 0);
+              }}
+              placeholder="Same"
+              className="w-20 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+        )}
         
         <div>
           <label className="text-xs text-gray-500 block">Multiplier</label>
