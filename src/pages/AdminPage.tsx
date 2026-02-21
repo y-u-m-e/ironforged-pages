@@ -720,8 +720,8 @@ export function AdminPage() {
               {expandedCategories.clue && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    <p>Points = completions ÷ clues_per_point × multiplier</p>
-                    <p className="text-gray-400 mt-1">Example: 2 means 2 clues = 1 point</p>
+                    <p>Points = completions × points_per_clue × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 0.5 means each clue = 0.5 points</p>
                   </div>
                   {groupedConfigs.clue.map(config => (
                     <ConfigRow 
@@ -730,7 +730,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
-                      labelOverride="Clues/Pt"
+                      labelOverride="Pts/Clue"
                     />
                   ))}
                 </div>
