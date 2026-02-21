@@ -68,10 +68,11 @@ export function AdminPage() {
         credentials: 'include',
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error('Failed to fetch configs');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to fetch configs (${res.status})`);
       setConfigs(data.configs || []);
     } catch (err) {
+      console.error('Fetch configs error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load configurations');
     }
   };
@@ -82,10 +83,11 @@ export function AdminPage() {
         credentials: 'include',
         headers: getAuthHeaders()
       });
-      if (!res.ok) throw new Error('Failed to fetch members');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to fetch members (${res.status})`);
       setMembers(data.members || []);
     } catch (err) {
+      console.error('Fetch members error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load members');
     }
   };
