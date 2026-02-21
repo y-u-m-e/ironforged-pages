@@ -55,6 +55,7 @@ boss_dagannoth_prime,35,,1
 boss_dagannoth_rex,60,,1
 boss_dagannoth_supreme,35,,1
 boss_deranged_archaeologist,50,,1
+boss_doom_of_mokhaiotl,10,,1
 boss_duke_sucellus,8,,1
 boss_general_graardor,8,,1
 boss_giant_mole,50,,1
@@ -72,9 +73,11 @@ boss_nightmare,5,,1
 boss_phosanis_nightmare,2,,1
 boss_obor,3,,1
 boss_phantom_muspah,8,,1
+boss_royal_titans,10,,1
 boss_sarachnis,40,,1
 boss_scorpia,15,,1
 boss_scurrius,60,,1
+boss_shellbane_gryphon,10,,1
 boss_skotizo,6,,1
 boss_spindel,15,,1
 boss_the_gauntlet,10,,1
@@ -87,6 +90,7 @@ boss_vardorvis,10,,1
 boss_venenatis,15,,1
 boss_vetion,15,,1
 boss_vorkath,12,,1
+boss_yama,10,,1
 boss_zulrah,12,,1
 clue_beginner,10,,1
 clue_easy,5,,1
