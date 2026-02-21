@@ -193,17 +193,6 @@ function App() {
             We're working hard to bring you an amazing website experience. 
             Please check back soon!
           </p>
-
-          {/* Back to main site */}
-          <a 
-            href="https://emuy.gg"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors"
-          >
-            <span>Visit Main Site</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </a>
         </div>
 
         {/* Footer */}
