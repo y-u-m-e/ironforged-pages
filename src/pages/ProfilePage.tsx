@@ -22,7 +22,8 @@ interface SkillPointData {
 interface BossPointData {
   kills: number;
   points: number;
-  config: { points_per_unit: number; multiplier: number };
+  category?: string;
+  config: { points_per_unit?: number; kills_per_point?: number; points_per_kc?: number; multiplier: number };
 }
 
 interface CluePointData {
@@ -104,6 +105,9 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState({
     skills: true,
+    raids: true,
+    waves: true,
+    minigames: true,
     bosses: true,
     clues: true
   });
@@ -200,7 +204,7 @@ export function ProfilePage() {
     return num.toLocaleString();
   };
 
-  const toggleSection = (section: 'skills' | 'bosses' | 'clues') => {
+  const toggleSection = (section: 'skills' | 'raids' | 'waves' | 'minigames' | 'bosses' | 'clues') => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
@@ -210,11 +214,42 @@ export function ProfilePage() {
         .sort((a, b) => b[1].points - a[1].points)
     : [];
 
-  // Sort bosses by points descending
-  const sortedBosses = profile?.points?.details?.bosses
+  // ID lists for categorization fallback
+  const raidIds = [
+    'chambers_of_xeric', 'chambers_of_xeric_challenge_mode',
+    'theatre_of_blood', 'theatre_of_blood_hard_mode',
+    'tombs_of_amascut', 'tombs_of_amascut_expert'
+  ];
+  const waveIds = ['sol_heredit', 'tzkal_zuk', 'tztok_jad'];
+  const minigameIds = ['rifts_closed', 'tempoross', 'wintertodt', 'zalcano'];
+
+  // Group bosses by category
+  const allBosses = profile?.points?.details?.bosses
     ? Object.entries(profile.points.details.bosses)
-        .sort((a, b) => b[1].points - a[1].points)
     : [];
+
+  const raidBosses = allBosses
+    .filter(([name, data]) => data.category === 'raids' || raidIds.includes(name.toLowerCase().replace(/\s+/g, '_')))
+    .sort((a, b) => b[1].points - a[1].points);
+
+  const waveBosses = allBosses
+    .filter(([name, data]) => data.category === 'waves' || waveIds.includes(name.toLowerCase().replace(/\s+/g, '_')))
+    .sort((a, b) => b[1].points - a[1].points);
+
+  const minigameBosses = allBosses
+    .filter(([name, data]) => data.category === 'minigames' || minigameIds.includes(name.toLowerCase().replace(/\s+/g, '_')))
+    .sort((a, b) => b[1].points - a[1].points);
+
+  // Regular bosses (not in raids, waves, or minigames)
+  const sortedBosses = allBosses
+    .filter(([name, data]) => {
+      const normalizedName = name.toLowerCase().replace(/\s+/g, '_');
+      const isRaid = data.category === 'raids' || raidIds.includes(normalizedName);
+      const isWave = data.category === 'waves' || waveIds.includes(normalizedName);
+      const isMinigame = data.category === 'minigames' || minigameIds.includes(normalizedName);
+      return !isRaid && !isWave && !isMinigame;
+    })
+    .sort((a, b) => b[1].points - a[1].points);
 
   // Sort clues by points descending
   const sortedClues = profile?.points?.details?.clues
@@ -516,6 +551,162 @@ export function ProfilePage() {
               )}
             </div>
 
+            {/* Raids Section */}
+            {raidBosses.length > 0 && (
+              <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+                <button
+                  onClick={() => toggleSection('raids')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5 text-yellow-400" />
+                    <span className="font-semibold">Raids</span>
+                    <span className="text-gray-400 text-sm">
+                      ({raidBosses.reduce((sum, [, d]) => sum + d.points, 0).toFixed(1)} pts)
+                    </span>
+                  </div>
+                  {expandedSections.raids ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedSections.raids && (
+                  <div className="p-4 pt-0 space-y-2">
+                    {raidBosses.map(([bossName, data]) => (
+                      <div 
+                        key={bossName}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded bg-yellow-900/50 flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-yellow-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium capitalize truncate">
+                            {bossName.replace(/_/g, ' ')}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {data.kills.toLocaleString()} completions
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-amber-400">{data.points.toFixed(1)}</div>
+                          <div className="text-xs text-gray-500">
+                            {data.config.points_per_kc ?? data.config.points_per_unit} pts/kc
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Wave-based Section */}
+            {waveBosses.length > 0 && (
+              <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+                <button
+                  onClick={() => toggleSection('waves')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Swords className="w-5 h-5 text-orange-400" />
+                    <span className="font-semibold">Wave-based</span>
+                    <span className="text-gray-400 text-sm">
+                      ({waveBosses.reduce((sum, [, d]) => sum + d.points, 0).toFixed(1)} pts)
+                    </span>
+                  </div>
+                  {expandedSections.waves ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedSections.waves && (
+                  <div className="p-4 pt-0 space-y-2">
+                    {waveBosses.map(([bossName, data]) => (
+                      <div 
+                        key={bossName}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded bg-orange-900/50 flex items-center justify-center">
+                          <Swords className="w-4 h-4 text-orange-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium capitalize truncate">
+                            {bossName.replace(/_/g, ' ')}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {data.kills.toLocaleString()} completions
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-amber-400">{data.points.toFixed(1)}</div>
+                          <div className="text-xs text-gray-500">
+                            {data.config.points_per_kc ?? data.config.points_per_unit} pts/kc
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Minigames Section */}
+            {minigameBosses.length > 0 && (
+              <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+                <button
+                  onClick={() => toggleSection('minigames')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Target className="w-5 h-5 text-cyan-400" />
+                    <span className="font-semibold">Minigames</span>
+                    <span className="text-gray-400 text-sm">
+                      ({minigameBosses.reduce((sum, [, d]) => sum + d.points, 0).toFixed(1)} pts)
+                    </span>
+                  </div>
+                  {expandedSections.minigames ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedSections.minigames && (
+                  <div className="p-4 pt-0 space-y-2">
+                    {minigameBosses.map(([bossName, data]) => (
+                      <div 
+                        key={bossName}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded bg-cyan-900/50 flex items-center justify-center">
+                          <Target className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium capitalize truncate">
+                            {bossName.replace(/_/g, ' ')}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {data.kills.toLocaleString()} completions
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-amber-400">{data.points.toFixed(1)}</div>
+                          <div className="text-xs text-gray-500">
+                            {data.config.kills_per_point ?? data.config.points_per_unit} per pt
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Bosses Section */}
             {sortedBosses.length > 0 && (
               <div className="bg-gray-900/50 rounded-xl border border-gray-800">
@@ -524,10 +715,10 @@ export function ProfilePage() {
                   className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Swords className="w-5 h-5 text-amber-400" />
-                    <span className="font-semibold">Boss Kills</span>
+                    <Swords className="w-5 h-5 text-red-400" />
+                    <span className="font-semibold">Bosses</span>
                     <span className="text-gray-400 text-sm">
-                      ({formatNumber(profile.points.breakdown.bosses)} pts)
+                      ({sortedBosses.reduce((sum, [, d]) => sum + d.points, 0).toFixed(1)} pts)
                     </span>
                   </div>
                   {expandedSections.bosses ? (
@@ -558,7 +749,7 @@ export function ProfilePage() {
                         <div className="text-right">
                           <div className="font-semibold text-amber-400">{data.points.toFixed(1)}</div>
                           <div className="text-xs text-gray-500">
-                            {data.config.points_per_unit}/kill
+                            {data.config.kills_per_point ?? data.config.points_per_unit} kc/pt
                           </div>
                         </div>
                       </div>

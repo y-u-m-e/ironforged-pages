@@ -21,6 +21,7 @@ interface PointConfig {
   unit_type: string;
   multiplier: number;
   enabled: number;
+  rounding?: 'none' | 'up' | 'down';
 }
 
 interface ClanMember {
@@ -132,7 +133,8 @@ export function AdminPage() {
           points_per_unit: config.points_per_unit,
           post_99_points: config.post_99_points,
           multiplier: config.multiplier,
-          enabled: config.enabled
+          enabled: config.enabled,
+          rounding: config.rounding || 'none'
         })
       });
       if (!res.ok) throw new Error('Failed to update config');
@@ -145,7 +147,7 @@ export function AdminPage() {
     }
   };
 
-  const handleConfigChange = (id: string, field: string, value: number) => {
+  const handleConfigChange = (id: string, field: string, value: number | string | null) => {
     setConfigs(prev => {
       const updated = prev.map(c => 
         c.id === id ? { ...c, [field]: value } : c
@@ -157,7 +159,8 @@ export function AdminPage() {
         const isModified = original && (
           updatedConfig.points_per_unit !== original.points_per_unit ||
           updatedConfig.post_99_points !== original.post_99_points ||
-          updatedConfig.multiplier !== original.multiplier
+          updatedConfig.multiplier !== original.multiplier ||
+          updatedConfig.rounding !== original.rounding
         );
         setModifiedConfigs(prev => {
           const newMap = new Map(prev);
@@ -184,7 +187,8 @@ export function AdminPage() {
         config_key: c.id,
         points_per_unit: c.points_per_unit,
         post_99_points: c.post_99_points,
-        multiplier: c.multiplier
+        multiplier: c.multiplier,
+        rounding: c.rounding || 'none'
       }));
       
       const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
@@ -865,7 +869,7 @@ function ConfigRow({
   labelOverride
 }: { 
   config: PointConfig; 
-  onChange: (id: string, field: string, value: number) => void;
+  onChange: (id: string, field: string, value: number | string | null) => void;
   onSave: (config: PointConfig) => void;
   saving: boolean;
   showPost99?: boolean;
@@ -874,7 +878,8 @@ function ConfigRow({
   const [localConfig, setLocalConfig] = useState(config);
   const hasChanges = localConfig.points_per_unit !== config.points_per_unit || 
                      localConfig.multiplier !== config.multiplier ||
-                     localConfig.post_99_points !== config.post_99_points;
+                     localConfig.post_99_points !== config.post_99_points ||
+                     localConfig.rounding !== config.rounding;
 
   const mainLabel = labelOverride ?? (showPost99 ? 'XP/Point' : 'Points/Unit');
 
@@ -934,6 +939,23 @@ function ConfigRow({
             }}
             className="w-16 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
           />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500 block">Rounding</label>
+          <select
+            value={localConfig.rounding || 'none'}
+            onChange={e => {
+              const val = e.target.value as 'none' | 'up' | 'down';
+              setLocalConfig(prev => ({ ...prev, rounding: val }));
+              onChange(config.id, 'rounding', val);
+            }}
+            className="w-20 px-2 py-1 rounded bg-gray-700 border border-gray-600 text-sm focus:border-amber-500 focus:outline-none"
+          >
+            <option value="none">None</option>
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+          </select>
         </div>
 
         <button
