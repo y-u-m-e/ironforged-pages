@@ -264,14 +264,19 @@ export function AdminPage() {
       }
       
       // Send bulk update to API
+      const headers = getAuthHeaders();
+      console.log('Import headers:', headers);
+      console.log('Token from localStorage:', localStorage.getItem('staging_auth_token'));
+      
       const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
         method: 'PUT',
         credentials: 'include',
-        headers: getAuthHeaders(),
+        headers,
         body: JSON.stringify({ configs: updates })
       });
       
       const data = await res.json();
+      console.log('Import response:', res.status, data);
       if (!res.ok) throw new Error(data.error || 'Failed to import configurations');
       
       setSuccess(`Imported ${data.updated} configurations`);
