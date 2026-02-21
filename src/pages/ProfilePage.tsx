@@ -196,9 +196,18 @@ export function ProfilePage() {
           <h1 className="text-2xl font-bold text-white mb-2">No RSN Linked</h1>
           <p className="text-gray-400 mb-6">
             Your Discord account is not linked to an OSRS RuneScape name yet. 
-            Please contact a clan admin to link your account.
+            {isAdmin ? ' You can link your RSN in the Admin Panel.' : ' Please contact a clan admin to link your account.'}
           </p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-wrap gap-3 justify-center">
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Admin Panel
+              </button>
+            )}
             <button 
               onClick={() => navigate('/')}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
