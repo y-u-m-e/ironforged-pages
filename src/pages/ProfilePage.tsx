@@ -97,7 +97,7 @@ const SKILL_COLORS: Record<string, string> = {
 };
 
 export function ProfilePage() {
-  const { user, clanMember, loading: authLoading, logout, isAdmin } = useAuth();
+  const { user, clanMember, loading: authLoading, logout, isAdmin, refresh } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +107,11 @@ export function ProfilePage() {
     bosses: true,
     clues: true
   });
+  
+  // RSN linking state
+  const [rsnInput, setRsnInput] = useState('');
+  const [linkingRsn, setLinkingRsn] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     if (!clanMember?.rsn) {
@@ -137,6 +142,38 @@ export function ProfilePage() {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const linkRsn = async () => {
+    if (!rsnInput.trim() || !user) return;
+    
+    setLinkingRsn(true);
+    setLinkError(null);
+    
+    try {
+      const stagingToken = localStorage.getItem('staging_auth_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (stagingToken) {
+        headers['Authorization'] = `Bearer ${stagingToken}`;
+      }
+      
+      const res = await fetch(`${API_URLS.API}/clan/link-rsn`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({ rsn: rsnInput.trim() })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to link RSN');
+      
+      // Refresh auth context to get updated clan member info
+      await refresh();
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : 'Failed to link RSN');
+    } finally {
+      setLinkingRsn(false);
     }
   };
 
@@ -189,20 +226,64 @@ export function ProfilePage() {
   if (!clanMember) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
-        <div className="max-w-md text-center">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-6">
-            <User className="w-8 h-8 text-amber-400" />
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-6">
+              <User className="w-8 h-8 text-amber-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Link Your RSN</h1>
+            <p className="text-gray-400">
+              Enter your Old School RuneScape name to link it to your Discord account.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">No RSN Linked</h1>
-          <p className="text-gray-400 mb-6">
-            Your Discord account is not linked to an OSRS RuneScape name yet. 
-            {isAdmin ? ' You can link your RSN in the Admin Panel.' : ' Please contact a clan admin to link your account.'}
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center">
+
+          <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 space-y-4">
+            {linkError && (
+              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
+                {linkError}
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">RuneScape Name</label>
+              <input
+                type="text"
+                value={rsnInput}
+                onChange={e => setRsnInput(e.target.value)}
+                placeholder="Enter your RSN"
+                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-amber-500 focus:outline-none text-white placeholder-gray-500"
+                onKeyDown={e => e.key === 'Enter' && linkRsn()}
+              />
+            </div>
+
+            <button
+              onClick={linkRsn}
+              disabled={linkingRsn || !rsnInput.trim()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {linkingRsn ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Linking...
+                </>
+              ) : (
+                <>
+                  <User className="w-5 h-5" />
+                  Link RSN
+                </>
+              )}
+            </button>
+
+            <p className="text-xs text-gray-500 text-center">
+              This will be your display name across Iron Forged
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-center mt-6">
             {isAdmin && (
               <button 
                 onClick={() => navigate('/admin')}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Admin Panel
