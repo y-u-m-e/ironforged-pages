@@ -579,8 +579,8 @@ export function AdminPage() {
               {expandedCategories.raid && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    <p>Points = completions ÷ completions_per_point × multiplier</p>
-                    <p className="text-gray-400 mt-1">Example: 1 means 1 completion = 1 point</p>
+                    <p>Points = completions × points_per_kc × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 2.5 means each completion = 2.5 points</p>
                   </div>
                   {groupedConfigs.raid.map(config => (
                     <ConfigRow 
@@ -589,7 +589,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
-                      labelOverride="KC/Point"
+                      labelOverride="Pts/KC"
                     />
                   ))}
                 </div>
@@ -613,8 +613,8 @@ export function AdminPage() {
               {expandedCategories.wave && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    <p>Points = completions ÷ completions_per_point × multiplier</p>
-                    <p className="text-gray-400 mt-1">Example: 0.1 means 1 completion = 10 points</p>
+                    <p>Points = completions × points_per_kc × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 10 means each completion = 10 points</p>
                   </div>
                   {groupedConfigs.wave.map(config => (
                     <ConfigRow 
@@ -623,7 +623,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
-                      labelOverride="KC/Point"
+                      labelOverride="Pts/KC"
                     />
                   ))}
                 </div>
