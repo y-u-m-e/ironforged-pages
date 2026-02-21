@@ -573,7 +573,8 @@ export function AdminPage() {
               {expandedCategories.boss && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    Points are calculated as: kills × points_per_unit × multiplier
+                    <p>Points = kills ÷ kc_per_point × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 10 means 10 kills = 1 point</p>
                   </div>
                   {groupedConfigs.boss.map(config => (
                     <ConfigRow 
@@ -582,6 +583,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
+                      labelOverride="KC/Point"
                     />
                   ))}
                 </div>
@@ -605,7 +607,8 @@ export function AdminPage() {
               {expandedCategories.clue && (
                 <div className="p-4 pt-0 space-y-2">
                   <div className="text-xs text-gray-500 mb-2">
-                    Points are calculated as: completions × points_per_unit × multiplier
+                    <p>Points = completions × points_per_clue × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 5 means each clue = 5 points</p>
                   </div>
                   {groupedConfigs.clue.map(config => (
                     <ConfigRow 
@@ -614,6 +617,7 @@ export function AdminPage() {
                       onChange={handleConfigChange}
                       onSave={updateConfig}
                       saving={saving}
+                      labelOverride="Pts/Clue"
                     />
                   ))}
                 </div>
@@ -751,11 +755,14 @@ function ConfigRow({
   onSave: (config: PointConfig) => void;
   saving: boolean;
   showPost99?: boolean;
+  labelOverride?: string;
 }) {
   const [localConfig, setLocalConfig] = useState(config);
   const hasChanges = localConfig.points_per_unit !== config.points_per_unit || 
                      localConfig.multiplier !== config.multiplier ||
                      localConfig.post_99_points !== config.post_99_points;
+
+  const mainLabel = labelOverride ?? (showPost99 ? 'XP/Point' : 'Points/Unit');
 
   return (
     <div className="flex items-center gap-4 p-3 rounded-lg bg-gray-800/50">
@@ -768,10 +775,10 @@ function ConfigRow({
       
       <div className="flex items-center gap-3">
         <div>
-          <label className="text-xs text-gray-500 block">{showPost99 ? 'XP/Point' : 'Points/Unit'}</label>
+          <label className="text-xs text-gray-500 block">{mainLabel}</label>
           <input
             type="number"
-            step="1"
+            step={labelOverride === 'KC/Point' ? '0.1' : '1'}
             value={localConfig.points_per_unit}
             onChange={e => {
               const val = parseFloat(e.target.value) || 0;
