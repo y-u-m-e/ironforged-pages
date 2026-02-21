@@ -46,6 +46,9 @@ export function AdminPage() {
   
   const [expandedCategories, setExpandedCategories] = useState({
     skill: true,
+    raid: true,
+    wave: true,
+    minigame: true,
     boss: true,
     clue: true
   });
@@ -396,6 +399,9 @@ export function AdminPage() {
 
   const groupedConfigs = {
     skill: configs.filter(c => c.category === 'skills'),
+    raid: configs.filter(c => c.category === 'raids'),
+    wave: configs.filter(c => c.category === 'waves'),
+    minigame: configs.filter(c => c.category === 'minigames'),
     boss: configs.filter(c => c.category === 'bosses'),
     clue: configs.filter(c => c.category === 'clues')
   };
@@ -550,6 +556,108 @@ export function AdminPage() {
                       onSave={updateConfig}
                       saving={saving}
                       showPost99={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Raids */}
+            <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+              <button
+                onClick={() => toggleCategory('raid')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Swords className="w-5 h-5 text-yellow-400" />
+                  <span className="font-semibold">Raids</span>
+                  <span className="text-gray-400 text-sm">({groupedConfigs.raid.length})</span>
+                </div>
+                {expandedCategories.raid ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+              
+              {expandedCategories.raid && (
+                <div className="p-4 pt-0 space-y-2">
+                  <div className="text-xs text-gray-500 mb-2">
+                    <p>Points = completions ÷ completions_per_point × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 1 means 1 completion = 1 point</p>
+                  </div>
+                  {groupedConfigs.raid.map(config => (
+                    <ConfigRow 
+                      key={config.id} 
+                      config={config} 
+                      onChange={handleConfigChange}
+                      onSave={updateConfig}
+                      saving={saving}
+                      labelOverride="KC/Point"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Wave-based Content */}
+            <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+              <button
+                onClick={() => toggleCategory('wave')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Swords className="w-5 h-5 text-orange-400" />
+                  <span className="font-semibold">Wave-based Content</span>
+                  <span className="text-gray-400 text-sm">({groupedConfigs.wave.length})</span>
+                </div>
+                {expandedCategories.wave ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+              
+              {expandedCategories.wave && (
+                <div className="p-4 pt-0 space-y-2">
+                  <div className="text-xs text-gray-500 mb-2">
+                    <p>Points = completions ÷ completions_per_point × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 0.1 means 1 completion = 10 points</p>
+                  </div>
+                  {groupedConfigs.wave.map(config => (
+                    <ConfigRow 
+                      key={config.id} 
+                      config={config} 
+                      onChange={handleConfigChange}
+                      onSave={updateConfig}
+                      saving={saving}
+                      labelOverride="KC/Point"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Minigames */}
+            <div className="bg-gray-900/50 rounded-xl border border-gray-800">
+              <button
+                onClick={() => toggleCategory('minigame')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Swords className="w-5 h-5 text-cyan-400" />
+                  <span className="font-semibold">Minigames</span>
+                  <span className="text-gray-400 text-sm">({groupedConfigs.minigame.length})</span>
+                </div>
+                {expandedCategories.minigame ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+              
+              {expandedCategories.minigame && (
+                <div className="p-4 pt-0 space-y-2">
+                  <div className="text-xs text-gray-500 mb-2">
+                    <p>Points = completions ÷ completions_per_point × multiplier</p>
+                    <p className="text-gray-400 mt-1">Example: 10 means 10 completions = 1 point</p>
+                  </div>
+                  {groupedConfigs.minigame.map(config => (
+                    <ConfigRow 
+                      key={config.id} 
+                      config={config} 
+                      onChange={handleConfigChange}
+                      onSave={updateConfig}
+                      saving={saving}
+                      labelOverride="KC/Point"
                     />
                   ))}
                 </div>
