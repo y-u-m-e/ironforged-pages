@@ -1,10 +1,10 @@
 /**
- * Auth Context - Same as emuy-pages but configured for events domain
+ * Auth Context for Ironforged Pages
+ * Handles Discord OAuth authentication
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.emuy.gg';
+import { API_URLS } from '@/lib/api-config';
 
 interface User {
   id: string;
@@ -13,19 +13,20 @@ interface User {
   avatar: string | null;
 }
 
-interface Role {
-  id: string;
-  name: string;
-  color: string;
-  priority: number;
+interface ClanMember {
+  discord_id: string;
+  rsn: string;
+  display_name?: string;
+  rank?: string;
+  join_date?: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  clanMember: ClanMember | null;
   loading: boolean;
-  roles: Role[];
   permissions: string[];
-  isEventsAdmin: boolean;
+  isAdmin: boolean;
   isSuperAdmin: boolean;
   hasPermission: (perm: string) => boolean;
   login: () => void;
@@ -37,54 +38,95 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [clanMember, setClanMember] = useState<ClanMember | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    const stagingToken = localStorage.getItem('staging_auth_token');
+    if (stagingToken) {
+      headers['Authorization'] = `Bearer ${stagingToken}`;
+    }
+    return headers;
+  };
 
   const checkAuth = async () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE}/auth/me`, {
+      const response = await fetch(`${API_URLS.AUTH}/auth/me`, {
         credentials: 'include',
+        headers: getAuthHeaders(),
       });
       
       if (response.ok) {
         const data = await response.json();
         if (data.authenticated && data.user) {
           setUser(data.user);
-          setRoles(data.roles || []);
           setPermissions(data.permissions || []);
           setIsSuperAdmin(data.is_super_admin || false);
+          
+          // Fetch clan member info based on discord ID
+          try {
+            const memberRes = await fetch(`${API_URLS.API}/clan/member/${data.user.id}`, {
+              credentials: 'include',
+              headers: getAuthHeaders(),
+            });
+            if (memberRes.ok) {
+              const memberData = await memberRes.json();
+              setClanMember(memberData || null);
+            }
+          } catch {
+            setClanMember(null);
+          }
         } else {
-          setUser(null);
-          setRoles([]);
-          setPermissions([]);
-          setIsSuperAdmin(false);
+          clearAuth();
         }
+      } else {
+        clearAuth();
       }
     } catch (err) {
       console.error('Auth check failed:', err);
-      setUser(null);
+      clearAuth();
     }
     
     setLoading(false);
   };
 
+  const clearAuth = () => {
+    setUser(null);
+    setClanMember(null);
+    setPermissions([]);
+    setIsSuperAdmin(false);
+    const stagingToken = localStorage.getItem('staging_auth_token');
+    if (stagingToken) {
+      localStorage.removeItem('staging_auth_token');
+    }
+  };
+
   useEffect(() => {
+    // Handle auth token from URL (after OAuth redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('auth_token');
+    if (urlToken) {
+      localStorage.setItem('staging_auth_token', urlToken);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    
     checkAuth();
   }, []);
 
   const login = () => {
     const returnUrl = window.location.href;
-    // Pass source for events domain
-    window.location.href = `${API_BASE}/auth/login?return_url=${encodeURIComponent(returnUrl)}&source=ironforged-events`;
+    window.location.href = `${API_URLS.AUTH}/auth/login?return_url=${encodeURIComponent(returnUrl)}`;
   };
 
   const logout = () => {
+    localStorage.removeItem('staging_auth_token');
     const returnUrl = window.location.origin;
-    window.location.href = `${API_BASE}/auth/logout?return_url=${encodeURIComponent(returnUrl)}`;
+    window.location.href = `${API_URLS.AUTH}/auth/logout?return_url=${encodeURIComponent(returnUrl)}`;
   };
 
   const refresh = async () => {
@@ -96,15 +138,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return permissions.includes(perm);
   }, [permissions, isSuperAdmin]);
 
-  const isEventsAdmin = isSuperAdmin || hasPermission('view_events_admin') || hasPermission('manage_events');
+  const isAdmin = isSuperAdmin || hasPermission('ironforged_admin');
 
   return (
     <AuthContext.Provider value={{
       user,
+      clanMember,
       loading,
-      roles,
       permissions,
-      isEventsAdmin,
+      isAdmin,
       isSuperAdmin,
       hasPermission,
       login,
@@ -123,4 +165,3 @@ export function useAuth() {
   }
   return context;
 }
-
