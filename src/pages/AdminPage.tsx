@@ -397,12 +397,17 @@ export function AdminPage() {
     }
   };
 
+  // Define IDs for special categories (in case DB hasn't been migrated yet)
+  const raidIds = ['boss_chambers_of_xeric', 'boss_chambers_of_xeric_challenge_mode', 'boss_theatre_of_blood', 'boss_theatre_of_blood_hard_mode', 'boss_tombs_of_amascut', 'boss_tombs_of_amascut_expert'];
+  const waveIds = ['boss_sol_heredit', 'boss_tzkal_zuk', 'boss_tztok_jad'];
+  const minigameIds = ['boss_rifts_closed', 'boss_tempoross', 'boss_wintertodt', 'boss_zalcano'];
+  
   const groupedConfigs = {
     skill: configs.filter(c => c.category === 'skills'),
-    raid: configs.filter(c => c.category === 'raids'),
-    wave: configs.filter(c => c.category === 'waves'),
-    minigame: configs.filter(c => c.category === 'minigames'),
-    boss: configs.filter(c => c.category === 'bosses'),
+    raid: configs.filter(c => c.category === 'raids' || raidIds.includes(c.id)),
+    wave: configs.filter(c => c.category === 'waves' || waveIds.includes(c.id)),
+    minigame: configs.filter(c => c.category === 'minigames' || minigameIds.includes(c.id)),
+    boss: configs.filter(c => (c.category === 'bosses' && !raidIds.includes(c.id) && !waveIds.includes(c.id) && !minigameIds.includes(c.id))),
     clue: configs.filter(c => c.category === 'clues')
   };
 
