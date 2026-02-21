@@ -2,13 +2,13 @@
  * Admin Page - Configure clan point values
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URLS } from '@/lib/api-config';
 import { 
   Loader2, Save, ArrowLeft, Target, Swords, ScrollText,
-  ChevronDown, ChevronUp, Users, Plus, Trash2
+  ChevronDown, ChevronUp, Users, Plus, Trash2, Upload, Download
 } from 'lucide-react';
 
 interface PointConfig {
@@ -52,6 +52,10 @@ export function AdminPage() {
   // New member form
   const [newMember, setNewMember] = useState({ discord_id: '', rsn: '', display_name: '', rank: 'member' });
   const [showAddMember, setShowAddMember] = useState(false);
+
+  // CSV import
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const getAuthHeaders = (): Record<string, string> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -187,6 +191,105 @@ export function AdminPage() {
     }));
   };
 
+  // Export configs to CSV
+  const exportToCsv = () => {
+    const headers = ['config_key', 'category', 'name', 'points_per_unit', 'multiplier', 'unit_type'];
+    const rows = configs.map(c => [
+      c.id,
+      c.category,
+      c.name,
+      c.points_per_unit,
+      c.multiplier,
+      c.unit_type
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'point_config.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import configs from CSV
+  const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImporting(true);
+    setError(null);
+    
+    try {
+      const text = await file.text();
+      const lines = text.trim().split('\n');
+      
+      if (lines.length < 2) {
+        throw new Error('CSV must have a header row and at least one data row');
+      }
+      
+      // Parse header
+      const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const keyIndex = header.indexOf('config_key');
+      const ptsIndex = header.indexOf('points_per_unit');
+      const multIndex = header.indexOf('multiplier');
+      
+      if (keyIndex === -1 || ptsIndex === -1) {
+        throw new Error('CSV must have "config_key" and "points_per_unit" columns');
+      }
+      
+      // Parse data rows
+      const updates: { config_key: string; points_per_unit: number; multiplier: number }[] = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length <= Math.max(keyIndex, ptsIndex, multIndex)) continue;
+        
+        const config_key = values[keyIndex];
+        const points_per_unit = parseFloat(values[ptsIndex]);
+        const multiplier = multIndex !== -1 ? parseFloat(values[multIndex]) : 1;
+        
+        if (config_key && !isNaN(points_per_unit)) {
+          updates.push({ config_key, points_per_unit, multiplier: isNaN(multiplier) ? 1 : multiplier });
+        }
+      }
+      
+      if (updates.length === 0) {
+        throw new Error('No valid configurations found in CSV');
+      }
+      
+      // Send bulk update to API
+      const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ configs: updates })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to import configurations');
+      
+      setSuccess(`Imported ${data.updated} configurations`);
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Refresh configs
+      await fetchConfigs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const groupedConfigs = {
     skill: configs.filter(c => c.category === 'skills'),
     boss: configs.filter(c => c.category === 'bosses'),
@@ -268,6 +371,42 @@ export function AdminPage() {
       <div className="max-w-4xl mx-auto px-6 py-6">
         {activeTab === 'points' ? (
           <div className="space-y-4">
+            {/* Import/Export Controls */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Point Values</h2>
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvImport}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={importing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-50"
+                >
+                  {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  Import CSV
+                </button>
+                <button
+                  onClick={exportToCsv}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {/* CSV Format Help */}
+            <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 text-sm text-gray-400">
+              <strong className="text-gray-300">CSV Format:</strong> config_key, category, name, points_per_unit, multiplier, unit_type
+              <br />
+              <span className="text-xs">Only config_key and points_per_unit are required for import. Export first to see all current values.</span>
+            </div>
+
             {/* Skills */}
             <div className="bg-gray-900/50 rounded-xl border border-gray-800">
               <button
