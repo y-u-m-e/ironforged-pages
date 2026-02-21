@@ -158,6 +158,9 @@ export function ProfilePage() {
         headers['Authorization'] = `Bearer ${stagingToken}`;
       }
       
+      console.log('Linking RSN:', rsnInput.trim(), 'to user:', user.id);
+      console.log('API URL:', `${API_URLS.API}/clan/link-rsn`);
+      
       const res = await fetch(`${API_URLS.API}/clan/link-rsn`, {
         method: 'POST',
         credentials: 'include',
@@ -165,12 +168,17 @@ export function ProfilePage() {
         body: JSON.stringify({ rsn: rsnInput.trim() })
       });
       
+      console.log('Response status:', res.status);
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to link RSN');
+      console.log('Response data:', data);
+      
+      if (!res.ok) throw new Error(data.error || `Failed to link RSN (${res.status})`);
       
       // Refresh auth context to get updated clan member info
       await refresh();
     } catch (err) {
+      console.error('Link RSN error:', err);
       setLinkError(err instanceof Error ? err.message : 'Failed to link RSN');
     } finally {
       setLinkingRsn(false);
