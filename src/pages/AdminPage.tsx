@@ -58,6 +58,10 @@ export function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
+  // Track modified configs for "Save All"
+  const [modifiedConfigs, setModifiedConfigs] = useState<Map<string, PointConfig>>(new Map());
+  const [originalConfigs, setOriginalConfigs] = useState<Map<string, PointConfig>>(new Map());
+
   const getAuthHeaders = (): Record<string, string> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const stagingToken = localStorage.getItem('staging_auth_token');
@@ -75,7 +79,13 @@ export function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Failed to fetch configs (${res.status})`);
-      setConfigs(data.configs || []);
+      const fetchedConfigs = data.configs || [];
+      setConfigs(fetchedConfigs);
+      // Store original values for comparison
+      const origMap = new Map<string, PointConfig>();
+      fetchedConfigs.forEach((c: PointConfig) => origMap.set(c.id, { ...c }));
+      setOriginalConfigs(origMap);
+      setModifiedConfigs(new Map());
     } catch (err) {
       console.error('Fetch configs error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load configurations');
@@ -133,9 +143,77 @@ export function AdminPage() {
   };
 
   const handleConfigChange = (id: string, field: string, value: number) => {
-    setConfigs(prev => prev.map(c => 
-      c.id === id ? { ...c, [field]: value } : c
-    ));
+    setConfigs(prev => {
+      const updated = prev.map(c => 
+        c.id === id ? { ...c, [field]: value } : c
+      );
+      // Track modified config
+      const updatedConfig = updated.find(c => c.id === id);
+      if (updatedConfig) {
+        const original = originalConfigs.get(id);
+        const isModified = original && (
+          updatedConfig.points_per_unit !== original.points_per_unit ||
+          updatedConfig.post_99_points !== original.post_99_points ||
+          updatedConfig.multiplier !== original.multiplier
+        );
+        setModifiedConfigs(prev => {
+          const newMap = new Map(prev);
+          if (isModified) {
+            newMap.set(id, updatedConfig);
+          } else {
+            newMap.delete(id);
+          }
+          return newMap;
+        });
+      }
+      return updated;
+    });
+  };
+
+  const saveAllConfigs = async () => {
+    if (modifiedConfigs.size === 0) return;
+    
+    setSaving(true);
+    setError(null);
+    
+    try {
+      const updates = Array.from(modifiedConfigs.values()).map(c => ({
+        config_key: c.id,
+        points_per_unit: c.points_per_unit,
+        post_99_points: c.post_99_points,
+        multiplier: c.multiplier
+      }));
+      
+      const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ 
+          configs: updates,
+          admin_user_id: user?.id
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save configurations');
+      
+      setSuccess(`Saved ${data.updated} configurations`);
+      setTimeout(() => setSuccess(null), 3000);
+      
+      // Update original configs to match current state
+      setOriginalConfigs(prev => {
+        const newMap = new Map(prev);
+        modifiedConfigs.forEach((config, id) => {
+          newMap.set(id, { ...config });
+        });
+        return newMap;
+      });
+      setModifiedConfigs(new Map());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save configurations');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addMember = async () => {
@@ -423,6 +501,16 @@ export function AdminPage() {
                   <Download className="w-4 h-4" />
                   Export CSV
                 </button>
+                {modifiedConfigs.size > 0 && (
+                  <button
+                    onClick={saveAllConfigs}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-medium transition-colors disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save All ({modifiedConfigs.size})
+                  </button>
+                )}
               </div>
             </div>
 
