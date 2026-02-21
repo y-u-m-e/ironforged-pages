@@ -32,7 +32,7 @@ interface ClanMember {
 }
 
 export function AdminPage() {
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'points' | 'members'>('points');
@@ -265,14 +265,17 @@ export function AdminPage() {
       
       // Send bulk update to API
       const headers = getAuthHeaders();
-      console.log('Import headers:', headers);
-      console.log('Token from localStorage:', localStorage.getItem('staging_auth_token'));
+      console.log('Import - User ID:', user?.id);
+      console.log('Import - Token:', localStorage.getItem('staging_auth_token') ? 'present' : 'missing');
       
       const res = await fetch(`${API_URLS.API}/clan/points/config/bulk`, {
         method: 'PUT',
         credentials: 'include',
         headers,
-        body: JSON.stringify({ configs: updates })
+        body: JSON.stringify({ 
+          configs: updates,
+          admin_user_id: user?.id // Fallback auth for cross-service
+        })
       });
       
       const data = await res.json();
