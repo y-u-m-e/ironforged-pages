@@ -186,9 +186,9 @@ export function AdminPage() {
   };
 
   const groupedConfigs = {
-    skill: configs.filter(c => c.category === 'skill'),
-    boss: configs.filter(c => c.category === 'boss'),
-    clue: configs.filter(c => c.category === 'clue')
+    skill: configs.filter(c => c.category === 'skills'),
+    boss: configs.filter(c => c.category === 'bosses'),
+    clue: configs.filter(c => c.category === 'clues')
   };
 
   if (authLoading || loading) {
