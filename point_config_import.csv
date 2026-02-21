@@ -88,9 +88,9 @@ boss_tempoross,7,,1
 boss_wintertodt,10,,1
 boss_zalcano,5,,1
 boss_rifts_closed,7,,1
-clue_beginner,1,,1
-clue_easy,2,,1
+clue_beginner,10,,1
+clue_easy,5,,1
 clue_medium,3,,1
-clue_hard,5,,1
+clue_hard,2,,1
 clue_elite,1,,1
-clue_master,2,,1
+clue_master,1,,1
