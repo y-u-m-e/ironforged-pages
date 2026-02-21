@@ -139,8 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return permissions.includes(perm);
   }, [permissions, isSuperAdmin]);
 
-  const isAdmin = isSuperAdmin || hasPermission('ironforged_admin');
-  const isEventsAdmin = isSuperAdmin || hasPermission('events_admin') || hasPermission('ironforged_admin');
+  // Use view_devops permission - same as emuy.gg admin dashboard
+  const isAdmin = isSuperAdmin || hasPermission('view_devops');
+  const isEventsAdmin = isSuperAdmin || hasPermission('events_admin') || hasPermission('view_devops');
 
   return (
     <AuthContext.Provider value={{
