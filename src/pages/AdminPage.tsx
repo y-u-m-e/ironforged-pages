@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_URLS } from '@/lib/api-config';
 import { 
   Loader2, Save, ArrowLeft, Target, Swords, ScrollText,
-  ChevronDown, ChevronUp, Users, Plus, Trash2, RefreshCw
+  ChevronDown, ChevronUp, Users, Plus, Trash2
 } from 'lucide-react';
 
 interface PointConfig {

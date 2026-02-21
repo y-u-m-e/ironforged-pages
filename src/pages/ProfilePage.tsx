@@ -70,17 +70,6 @@ interface ProfileData {
   };
 }
 
-const SKILL_ORDER = [
-  'attack', 'hitpoints', 'mining',
-  'strength', 'agility', 'smithing',
-  'defence', 'herblore', 'fishing',
-  'ranged', 'thieving', 'cooking',
-  'prayer', 'crafting', 'firemaking',
-  'magic', 'fletching', 'woodcutting',
-  'runecrafting', 'slayer', 'farming',
-  'construction', 'hunter'
-];
-
 const SKILL_COLORS: Record<string, string> = {
   attack: 'bg-red-600',
   strength: 'bg-green-700',

@@ -27,6 +27,7 @@ interface AuthContextType {
   loading: boolean;
   permissions: string[];
   isAdmin: boolean;
+  isEventsAdmin: boolean;
   isSuperAdmin: boolean;
   hasPermission: (perm: string) => boolean;
   login: () => void;
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [permissions, isSuperAdmin]);
 
   const isAdmin = isSuperAdmin || hasPermission('ironforged_admin');
+  const isEventsAdmin = isSuperAdmin || hasPermission('events_admin') || hasPermission('ironforged_admin');
 
   return (
     <AuthContext.Provider value={{
@@ -147,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       permissions,
       isAdmin,
+      isEventsAdmin,
       isSuperAdmin,
       hasPermission,
       login,
