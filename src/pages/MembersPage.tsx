@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URLS } from '@/lib/api-config';
-import { Trophy, Users, Loader2, RefreshCw, Sword, ScrollText, Target, ChevronRight } from 'lucide-react';
+import { Trophy, Users, Loader2, RefreshCw, Sword, Target, ChevronRight } from 'lucide-react';
 
 interface RankingEntry {
   position: number;

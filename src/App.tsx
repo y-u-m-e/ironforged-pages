@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Home, Users, Trophy, Settings, Menu, X } from 'lucide-react';
+import { Home, Trophy, Menu, X } from 'lucide-react';
 import './index.css';
 
 import { MembersPage } from './pages/MembersPage';
